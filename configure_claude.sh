@@ -6,6 +6,9 @@
 
 set -e
 
+# 清理临时文件
+trap 'rm -f "$CONFIG_FILE.tmp"' EXIT
+
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -20,21 +23,7 @@ check_prerequisites() {
     echo "🔍 检查前置条件..."
     echo ""
 
-    # 1. 检查 jq
-    if command -v jq &> /dev/null; then
-        echo -e "  ✅ jq: $(jq --version 2>&1 | head -1)"
-    else
-        echo -e "  ${RED}❌ jq: 未安装${NC}"
-        echo ""
-        echo -e "  ${YELLOW}安装方法：${NC}"
-        echo "    macOS:  brew install jq"
-        echo "    Ubuntu/Debian:  sudo apt update && sudo apt install jq"
-        echo "    CentOS/RHEL:  sudo yum install jq"
-        echo "    Alpine:  apk add jq"
-        all_ok=false
-    fi
-
-    # 2. 检查 bash
+    # 1. 检查 bash
     if [ -n "$BASH_VERSION" ]; then
         echo -e "  ✅ bash: $BASH_VERSION"
     else
@@ -42,7 +31,7 @@ check_prerequisites() {
         all_ok=false
     fi
 
-    # 3. 检查 Claude Code 配置文件（可选）
+    # 2. 检查 Claude Code 配置文件（可选）
     local config_found=false
     local config_paths=(
         "$HOME/.claude/settings.json"
@@ -121,7 +110,7 @@ create_base_config() {
     cat > "$config_file" << 'EOF'
 {
   "env": {},
-  "model": "claude-3-5-sonnet-20241022",
+  "model": "step-3.5-flash",
   "statusLine": {
     "type": "command",
     "command": "echo Claude Code"
@@ -135,6 +124,15 @@ EOF
 }
 
 # ========== 主程序开始 ==========
+
+# 解析命令行参数
+CLAUDE_CONFIG=""
+while getopts "c:" opt; do
+    case "$opt" in
+        c) CLAUDE_CONFIG="$OPTARG" ;;
+        *) echo "用法: $0 [-c 配置文件路径]"; exit 1 ;;
+    esac
+done
 
 # 1. 检查前置条件
 check_prerequisites
@@ -150,16 +148,13 @@ fi
 echo "📁 使用配置文件: $CONFIG_FILE"
 echo ""
 
-# 验证配置文件是有效的 JSON
-if ! jq empty "$CONFIG_FILE" 2>/dev/null; then
-    echo -e "${RED}❌ 配置文件不是有效的 JSON: $CONFIG_FILE${NC}"
-    exit 1
-fi
-
 # 3. 菜单（只显示 StepFun 两个选项）
 echo "=========================================="
 echo "  Claude Code 配置 - 设置 StepFun"
 echo "=========================================="
+echo ""
+echo "获取 API Key："
+echo "  StepFun: https://platform.stepfun.com/interface-key"
 echo ""
 echo "请选择 StepFun 接入方式："
 echo "  1) StepFun 官方 API（按量计费）"
@@ -222,27 +217,34 @@ while true; do
 done
 
 # 7. 读取模型名称
-read -p "模型名称 [默认: $DEFAULT_MODEL]: " MODEL_NAME </dev/tty
+printf "模型名称 [默认: $DEFAULT_MODEL]: "
+read -r MODEL_NAME </dev/tty
 MODEL_NAME="${MODEL_NAME:-$DEFAULT_MODEL}"
 
 # 8. 备份配置
 echo ""
 echo "📦 正在备份配置文件..."
-cp "$CONFIG_FILE" "$CONFIG_FILE.bak.$(date +%Y%m%d%H%M%S)"
-echo "   备份文件: $CONFIG_FILE.bak.*"
+BACKUP_FILE="$CONFIG_FILE.bak.$(date +%Y%m%d%H%M%S)"
+cp "$CONFIG_FILE" "$BACKUP_FILE"
+echo "   备份文件: $BACKUP_FILE"
 echo ""
 
-# 9. 应用配置
+# 9. 应用配置（全量覆盖，避免残留旧模型配置）
 echo "⚙️  正在配置 Claude Code..."
 
-# 使用 jq 更新配置
-jq --arg token "$API_KEY" \
-   --arg base_url "$BASE_URL" \
-   --arg model "$MODEL_NAME" \
-   '.env.ANTHROPIC_AUTH_TOKEN = $token |
-    .env.ANTHROPIC_BASE_URL = $base_url |
-    .model = $model' \
-   "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+cat > "$CONFIG_FILE" << EOF
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "$BASE_URL",
+    "ANTHROPIC_AUTH_TOKEN": "$API_KEY",
+    "ANTHROPIC_MODEL": "$MODEL_NAME",
+    "ANTHROPIC_SMALL_FAST_MODEL": "$MODEL_NAME",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "$MODEL_NAME",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "$MODEL_NAME",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "$MODEL_NAME"
+  }
+}
+EOF
 
 echo -e "  ${GREEN}✅ Claude Code 配置已更新${NC}"
 echo ""
@@ -251,7 +253,7 @@ echo -e "${GREEN}✨ 配置完成！${NC}"
 echo "=========================================="
 echo ""
 echo "📝 配置文件: $CONFIG_FILE"
-echo "📦 备份文件: $CONFIG_FILE.bak.*"
+echo "📦 备份文件: $BACKUP_FILE"
 echo ""
 echo "⚙️  当前配置："
 echo "   提供商: StepFun $( [ "$CHOICE" = "1" ] && echo "官方 API" || echo "Step Plan" )"
@@ -260,7 +262,4 @@ echo "   端点: $BASE_URL"
 echo "   模型: $MODEL_NAME"
 echo ""
 echo "⚠️  重要：请重启 Claude Code 使配置生效"
-echo ""
-echo "获取 API Key："
-echo "  StepFun: https://platform.stepfun.com/console/apikeys"
 echo ""

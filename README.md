@@ -16,44 +16,42 @@
 
 ### macOS / Linux（Bash）
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Zgh332358/claude-key-setup/main/configure_claude.sh | bash
-```
-
-### Windows（PowerShell）
-```powershell
-irm https://raw.githubusercontent.com/Zgh332358/claude-key-setup/main/configure_claude.ps1 | iex
-```
-
-### 或下载后运行
-```bash
-# macOS/Linux
 curl -fsSL https://raw.githubusercontent.com/Zgh332358/claude-key-setup/main/configure_claude.sh -o configure_claude.sh
 chmod +x configure_claude.sh
 bash configure_claude.sh
+```
+
+### Windows（PowerShell 管理员模式）
+
+> ⚠️ 必须在**管理员模式**的 PowerShell 下运行，否则脚本会提示并退出。
+
+1. 右键点击 Windows 开始菜单，选择「终端管理员」或「Windows PowerShell (管理员)」
+2. 执行以下命令：
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+irm https://raw.githubusercontent.com/Zgh332358/claude-key-setup/main/configure_claude.ps1 -OutFile configure_claude.ps1
+.\configure_claude.ps1
+```
+
+### 指定配置文件路径
+```bash
+# macOS/Linux
+bash configure_claude.sh -c /path/to/settings.json
 
 # Windows PowerShell
-curl -fsSL https://raw.githubusercontent.com/Zgh332358/claude-key-setup/main/configure_claude.ps1 -o configure_claude.ps1
-.\configure_claude.ps1
+.\configure_claude.ps1 -c C:\path\to\settings.json
 ```
 
 ## 支持模式
 
 | 选项 | 模式 | Base URL | 说明 | API Key 获取 |
 |------|------|----------|------|-------------|
-| 1 | StepFun 官方 API | `https://api.stepfun.com` | 按量计费 | https://platform.stepfun.com/console/apikeys |
-| 2 | StepFun Step Plan | `https://api.stepfun.com/step_plan` | 订阅制 | https://platform.stepfun.com/console/apikeys |
-
-**默认模型：`step-3.5-flash`**（可按需修改）
+| 1 | StepFun 官方 API | `https://api.stepfun.com` | 按量计费 | https://platform.stepfun.com/interface-key |
+| 2 | StepFun Step Plan | `https://api.stepfun.com/step_plan` | 订阅制 | https://platform.stepfun.com/interface-key |
 
 ## 前置条件
 
 ### 必需
-- **jq** - JSON 处理工具
-  - macOS: `brew install jq`
-  - Ubuntu/Debian: `sudo apt install jq`
-  - CentOS/RHEL: `sudo yum install jq`
-  - Windows: 从 https://stedolan.github.io/jq/download/ 下载，或 `choco install jq`
-
 - **bash** (macOS/Linux) 或 **PowerShell** (Windows)
 
 - **Claude Code** - 已安装 CLI 工具
@@ -66,17 +64,17 @@ curl -fsSL https://raw.githubusercontent.com/Zgh332358/claude-key-setup/main/con
 | 系统 | 配置文件路径 |
 |------|-------------|
 | macOS/Linux | `~/.claude/settings.json` |
-| Windows | `%APPDATA%\Claude\settings.json` |
+| Windows | `%USERPROFILE%\.claude\settings.json` |
 
 如果配置文件不存在，脚本会自动创建。
 
 ## 配置流程
 
-1. ✅ 检查前置条件（jq、环境）
+1. ✅ 检查前置条件（bash/PowerShell、环境）
 2. ✅ 查找/创建配置文件
 3. ✅ 显示菜单（StepFun 两个选项）
 4. ✅ 输入 API Key
-5. ✅ 输入模型名称（默认 `step-1`，可回车跳过）
+5. ✅ 输入模型名称（默认 `step-3.5-flash`，可回车跳过）
 6. ✅ 备份原配置
 7. ✅ 写入新配置
 8. ✅ 提示重启 Claude Code
@@ -85,20 +83,20 @@ curl -fsSL https://raw.githubusercontent.com/Zgh332358/claude-key-setup/main/con
 
 ```bash
 # macOS/Linux
-curl -fsSL https://raw.githubusercontent.com/Zgh332358/claude-key-setup/main/configure_claude.sh | bash
+bash configure_claude.sh
 
 # 选择 1 (StepFun 官方 API)
 # 输入 API Key: sk-xxx
-# 模型名称: step-1 (或回车使用默认)
+# 模型名称: step-3.5-flash (或回车使用默认)
 ```
 
 ```powershell
 # Windows PowerShell
-irm https://raw.githubusercontent.com/Zgh332358/claude-key-setup/main/configure_claude.ps1 | iex
+.\configure_claude.ps1
 
 # 选择 1 (StepFun 官方 API)
 # 输入 API Key: sk-xxx
-# 模型名称: step-1 (或回车使用默认)
+# 模型名称: step-3.5-flash (或回车使用默认)
 ```
 
 ## 脚本说明
@@ -111,10 +109,16 @@ irm https://raw.githubusercontent.com/Zgh332358/claude-key-setup/main/configure_
 
 ## 配置结构
 
-脚本会修改 `settings.json` 的以下字段：
+脚本会全量覆盖 `settings.json`，写入以下字段：
 - `env.ANTHROPIC_AUTH_TOKEN` - API Key
 - `env.ANTHROPIC_BASE_URL` - API 端点
-- `model` - 默认模型
+- `env.ANTHROPIC_MODEL` - 默认模型
+- `env.ANTHROPIC_SMALL_FAST_MODEL` - 快速模型
+- `env.ANTHROPIC_DEFAULT_SONNET_MODEL` - Sonnet 模型
+- `env.ANTHROPIC_DEFAULT_OPUS_MODEL` - Opus 模型
+- `env.ANTHROPIC_DEFAULT_HAIKU_MODEL` - Haiku 模型
+
+> ⚠️ 脚本会备份原配置后全量覆盖，确保不会残留旧的模型配置。
 
 ## License
 
