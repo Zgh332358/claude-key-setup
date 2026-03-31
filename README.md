@@ -46,8 +46,8 @@ bash configure_claude.sh -c /path/to/settings.json
 
 | 选项 | 模式 | Base URL | 说明 | API Key 获取 |
 |------|------|----------|------|-------------|
-| 1 | StepFun 官方 API | `https://api.stepfun.com` | 按量计费 | https://platform.stepfun.com/console/apikeys |
-| 2 | StepFun Step Plan | `https://api.stepfun.com/step_plan` | 订阅制 | https://platform.stepfun.com/console/apikeys |
+| 1 | StepFun 官方 API | `https://api.stepfun.com` | 按量计费 | https://platform.stepfun.com/interface-key |
+| 2 | StepFun Step Plan | `https://api.stepfun.com/step_plan` | 订阅制 | https://platform.stepfun.com/interface-key |
 
 ## 前置条件
 
