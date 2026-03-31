@@ -183,13 +183,13 @@ switch ($choice) {
     '1' {
         $PROVIDER = "stepfun-official"
         $PROMPT = "请输入 StepFun API Key: "
-        $DEFAULT_MODEL = "step-1"
+        $DEFAULT_MODEL = "step-3.5-flash"
         $BASE_URL = "https://api.stepfun.com"
     }
     '2' {
         $PROVIDER = "stepfun-plan"
         $PROMPT = "请输入 StepFun API Key: "
-        $DEFAULT_MODEL = "step-1"
+        $DEFAULT_MODEL = "step-3.5-flash"
         $BASE_URL = "https://api.stepfun.com/step_plan"
     }
 }

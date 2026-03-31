@@ -43,6 +43,8 @@ curl -fsSL https://raw.githubusercontent.com/Zgh332358/claude-key-setup/main/con
 | 1 | StepFun 官方 API | `https://api.stepfun.com` | 按量计费 | https://platform.stepfun.com/console/apikeys |
 | 2 | StepFun Step Plan | `https://api.stepfun.com/step_plan` | 订阅制 | https://platform.stepfun.com/console/apikeys |
 
+**默认模型：`step-3.5-flash`**（可按需修改）
+
 ## 前置条件
 
 ### 必需
