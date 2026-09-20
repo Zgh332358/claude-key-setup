@@ -110,7 +110,7 @@ create_base_config() {
     cat > "$config_file" << 'EOF'
 {
   "env": {},
-  "model": "step-3.5-flash",
+  "model": "step-5-preview",
   "statusLine": {
     "type": "command",
     "command": "echo Claude Code"
@@ -187,13 +187,13 @@ case "$CHOICE" in
     1)
         PROVIDER="stepfun-official"
         PROMPT="请输入 StepFun API Key: "
-        DEFAULT_MODEL="step-3.5-flash"
+        DEFAULT_MODEL="step-5-preview"
         BASE_URL="https://api.stepfun.com"
         ;;
     2)
         PROVIDER="stepfun-plan"
         PROMPT="请输入 StepFun API Key: "
-        DEFAULT_MODEL="step-3.5-flash"
+        DEFAULT_MODEL="step-5-preview"
         BASE_URL="https://api.stepfun.com/step_plan"
         ;;
 esac

@@ -116,7 +116,7 @@ function New-BaseConfig {
     # 创建基础配置
     $configObj = [ordered]@{
         env = @{}
-        model = "step-3.5-flash"
+        model = "step-5-preview"
         statusLine = [ordered]@{
             type = "command"
             command = "echo Claude Code"
@@ -174,13 +174,13 @@ switch ($choice) {
     '1' {
         $PROVIDER = "stepfun-official"
         $PROMPT = "请输入 StepFun API Key"
-        $DEFAULT_MODEL = "step-3.5-flash"
+        $DEFAULT_MODEL = "step-5-preview"
         $BASE_URL = "https://api.stepfun.com"
     }
     '2' {
         $PROVIDER = "stepfun-plan"
         $PROMPT = "请输入 StepFun API Key"
-        $DEFAULT_MODEL = "step-3.5-flash"
+        $DEFAULT_MODEL = "step-5-preview"
         $BASE_URL = "https://api.stepfun.com/step_plan"
     }
 }
