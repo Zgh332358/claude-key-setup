@@ -74,7 +74,7 @@ bash configure_claude.sh -c /path/to/settings.json
 2. ✅ 查找/创建配置文件
 3. ✅ 显示菜单（StepFun 两个选项）
 4. ✅ 输入 API Key
-5. ✅ 输入模型名称（默认 `step-3.5-flash`，可回车跳过）
+5. ✅ 输入模型名称（默认 `step-5-preview`，可回车跳过）
 6. ✅ 备份原配置
 7. ✅ 写入新配置
 8. ✅ 提示重启 Claude Code
@@ -87,7 +87,7 @@ bash configure_claude.sh
 
 # 选择 1 (StepFun 官方 API)
 # 输入 API Key: sk-xxx
-# 模型名称: step-3.5-flash (或回车使用默认)
+# 模型名称: step-5-preview (或回车使用默认)
 ```
 
 ```powershell
@@ -96,7 +96,7 @@ bash configure_claude.sh
 
 # 选择 1 (StepFun 官方 API)
 # 输入 API Key: sk-xxx
-# 模型名称: step-3.5-flash (或回车使用默认)
+# 模型名称: step-5-preview (或回车使用默认)
 ```
 
 ## 脚本说明
