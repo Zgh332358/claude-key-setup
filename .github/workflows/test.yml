@@ -44,6 +44,11 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - name: Verify private ACLs, configuration updates, and recovery
-        shell: ${{ matrix.shell }}
+      - name: Verify private ACLs, configuration updates, and recovery (Windows PowerShell)
+        if: matrix.shell == 'powershell'
+        shell: powershell
+        run: ./tests/test_configure_claude.ps1 -Language '${{ matrix.language }}'
+      - name: Verify private ACLs, configuration updates, and recovery (PowerShell 7)
+        if: matrix.shell == 'pwsh'
+        shell: pwsh
         run: ./tests/test_configure_claude.ps1 -Language '${{ matrix.language }}'
