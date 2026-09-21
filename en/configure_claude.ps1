@@ -369,13 +369,13 @@ switch ($choice) {
         $PROVIDER = "stepfun-official"
         $PROMPT = "Enter your StepFun API Key"
         $DEFAULT_MODEL = "step-5-preview"
-        $BASE_URL = "https://api.stepfun.com"
+        $BASE_URL = "https://api.stepfun.ai/"
     }
     '2' {
         $PROVIDER = "stepfun-plan"
         $PROMPT = "Enter your StepFun API Key"
         $DEFAULT_MODEL = "step-5-preview"
-        $BASE_URL = "https://api.stepfun.com/step_plan"
+        $BASE_URL = "https://api.stepfun.ai/step_plan"
     }
 }
 

@@ -55,8 +55,8 @@ An explicitly supplied path is always used. The script creates the file and its 
 
 | Option | Connection | Base URL | Billing | API keys |
 | --- | --- | --- | --- | --- |
-| 1 | StepFun Official API | `https://api.stepfun.com` | Pay as you go | [StepFun console](https://platform.stepfun.com/interface-key) |
-| 2 | StepFun Step Plan | `https://api.stepfun.com/step_plan` | Subscription | [StepFun console](https://platform.stepfun.com/interface-key) |
+| 1 | StepFun Official API | `https://api.stepfun.ai/` | Pay as you go | [StepFun console](https://platform.stepfun.com/interface-key) |
+| 2 | StepFun Step Plan | `https://api.stepfun.ai/step_plan` | Subscription | [StepFun console](https://platform.stepfun.com/interface-key) |
 
 ## Prerequisites
 

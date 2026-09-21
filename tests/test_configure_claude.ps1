@@ -62,20 +62,38 @@ if ($PSVersionTable.PSEdition -eq 'Desktop') {
 }
 $encoding = [System.Text.UTF8Encoding]::new($false)
 $fakeKey = 'test-only-key-"\$`-never-real'
-$baseUrl = 'https://api.stepfun.com/step_plan'
+$expectedEndpoints = if ($Language -eq 'en') {
+    @('https://api.stepfun.ai/', 'https://api.stepfun.ai/step_plan')
+} else {
+    @('https://api.stepfun.com', 'https://api.stepfun.com/step_plan')
+}
+$baseUrl = $expectedEndpoints[1]
 $passed = 0
 try {
+    # Inspect the menu's endpoint literals without executing the interactive main program.
+    $menuEndpoints = @($ast.FindAll({ param($node)
+        $node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+        $node.Left.Extent.Text -ceq '$BASE_URL'
+    }, $true) | ForEach-Object {
+        $_.Right.Find({ param($node)
+            $node -is [System.Management.Automation.Language.StringConstantExpressionAst]
+        }, $false).Value
+    })
+    Assert-True ($menuEndpoints.Count -eq 2) 'Expected two menu endpoint assignments.'
+    Assert-True ($menuEndpoints[0] -ceq $expectedEndpoints[0] -and $menuEndpoints[1] -ceq $expectedEndpoints[1]) 'Menu endpoints do not match the selected language.'
+
     # Explicit missing paths stay explicit; a bare filename resolves in the current directory.
     Push-Location $fixture
     try {
         Assert-True ((Find-ConfigFile 'new config[1].json') -ceq 'new config[1].json') 'Explicit path was changed.'
-        $backup = Update-ConfigFile 'new config[1].json' $baseUrl $fakeKey 'step-5-preview'
+        $backup = Update-ConfigFile 'new config[1].json' $expectedEndpoints[0] $fakeKey 'step-5-preview'
     } finally { Pop-Location }
     $created = Join-Path $fixture 'new config[1].json'
     Assert-True ($null -eq $backup) 'A new config unexpectedly had a backup.'
     $result = Get-Content -LiteralPath $created -Raw -Encoding UTF8 | ConvertFrom-Json
     Assert-True ($result.env.ANTHROPIC_AUTH_TOKEN -ceq $fakeKey) 'Special characters in key were not preserved.'
     Assert-True ($result.env.ANTHROPIC_MODEL -ceq 'step-5-preview') 'Model was not preserved.'
+    Assert-True ($result.env.ANTHROPIC_BASE_URL -ceq $expectedEndpoints[0]) 'Official API endpoint was not preserved.'
     Assert-PrivateFileSecurity (Get-Acl -LiteralPath $created)
     $passed++
     Write-Host "Completed Windows regression group $passed ($Language)."
@@ -98,6 +116,7 @@ try {
     Assert-True ($result.hooks.PreToolUse[0].hooks[0].command -ceq 'echo test') 'Hooks changed.'
     Assert-True ($result.permissions.allow[0] -ceq 'Read') 'Permissions changed.'
     Assert-True ($null -eq $result.env.old -and $result.env.ANTHROPIC_MODEL -ceq 'custom-model') 'Env replacement failed.'
+    Assert-True ($result.env.ANTHROPIC_BASE_URL -ceq $baseUrl) 'Step Plan endpoint was not preserved.'
     Assert-PrivateFileSecurity (Get-Acl -LiteralPath $backup)
     Assert-PrivateFileSecurity (Get-Acl -LiteralPath $existing)
     Assert-True ((Get-Acl -LiteralPath $fixture).Sddl -ceq $parentAclBefore) 'Parent directory ACL changed.'

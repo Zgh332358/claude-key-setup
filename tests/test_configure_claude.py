@@ -155,7 +155,7 @@ class ConfigureClaudeChecks:
         actual = json.loads(self.config.read_bytes())
         self.assertEqual({k: v for k, v in actual.items() if k != "env"},
                          {k: v for k, v in settings.items() if k != "env"})
-        self.assert_env(actual, "https://api.stepfun.com", "step-5-preview")
+        self.assert_env(actual, self.official_endpoint, "step-5-preview")
         self.assert_backup_and_cleanup(original)
 
     def test_step_plan_uses_new_default(self):
@@ -164,14 +164,14 @@ class ConfigureClaudeChecks:
         self.assertEqual(code, 0, output)
         actual = json.loads(self.config.read_bytes())
         self.assertEqual(actual["theme"], "light")
-        self.assert_env(actual, "https://api.stepfun.com/step_plan", "step-5-preview")
+        self.assert_env(actual, self.step_plan_endpoint, "step-5-preview")
         self.assert_backup_and_cleanup(original)
 
     def test_previous_model_remains_supported(self):
         code, output = self.run_script(b"{}", model="step-3.5-flash")
         self.assertEqual(code, 0, output)
         self.assert_env(json.loads(self.config.read_bytes()),
-                        "https://api.stepfun.com", "step-3.5-flash")
+                        self.official_endpoint, "step-3.5-flash")
 
     def test_escapes_api_key_and_custom_model(self):
         api_key = 'sk-test-"quoted"\\path'
@@ -179,7 +179,7 @@ class ConfigureClaudeChecks:
         code, output = self.run_script(b"{}", model=model, api_key=api_key)
         self.assertEqual(code, 0, output)
         self.assert_env(json.loads(self.config.read_bytes()),
-                        "https://api.stepfun.com", model, api_key)
+                        self.official_endpoint, model, api_key)
 
     def test_key_input_and_summary_do_not_expose_credentials(self):
         api_key = "sk-private-test-only-no-real-credential"
@@ -189,7 +189,7 @@ class ConfigureClaudeChecks:
         self.assertNotIn(api_key, output)
         self.assertNotIn(api_key[:10], output)
         self.assert_env(json.loads(self.config.read_bytes()),
-                        "https://api.stepfun.com", "step-5-preview", api_key)
+                        self.official_endpoint, "step-5-preview", api_key)
 
     def test_jq_process_arguments_and_environment_do_not_include_credentials(self):
         wrapper_directory = self.config.parent / "test-bin"
@@ -230,7 +230,7 @@ class ConfigureClaudeChecks:
             self.assertEqual(probe["environment_keys_with_input_key"], [],
                              "Entered key leaked into jq environment")
         self.assert_env(json.loads(self.config.read_bytes()),
-                        "https://api.stepfun.com", "step-5-preview", api_key)
+                        self.official_endpoint, "step-5-preview", api_key)
 
     def test_private_config_and_backup_from_previously_readable_config(self):
         original = b'{"theme":"dark","env":{"ANTHROPIC_AUTH_TOKEN":"old-fake-key"}}'
@@ -247,7 +247,7 @@ class ConfigureClaudeChecks:
         code, output = self.run_script(None)
         self.assertEqual(code, 0, output)
         self.assert_env(json.loads(self.config.read_bytes()),
-                        "https://api.stepfun.com", "step-5-preview")
+                        self.official_endpoint, "step-5-preview")
         self.assertEqual(self.config.stat().st_mode & 0o777, 0o600)
         self.assertEqual(self.config.parent.stat().st_mode & 0o777, 0o700)
         self.assertEqual(self.config.parent.parent.stat().st_mode & 0o777, 0o700)
@@ -261,7 +261,7 @@ class ConfigureClaudeChecks:
         code, output = self.run_script(None, config_arg=self.config.name)
         self.assertEqual(code, 0, output)
         self.assert_env(json.loads(self.config.read_bytes()),
-                        "https://api.stepfun.com", "step-5-preview")
+                        self.official_endpoint, "step-5-preview")
         self.assertEqual(self.config.stat().st_mode & 0o777, 0o600)
         backups = list(self.config.parent.glob(self.config.name + ".bak.*"))
         self.assertEqual(len(backups), 1)
@@ -343,7 +343,7 @@ class ConfigureClaudeChecks:
         self.assertTrue(self.config.is_symlink())
         actual = json.loads(target.read_bytes())
         self.assertEqual(actual["theme"], "dark")
-        self.assert_env(actual, "https://api.stepfun.com", "step-5-preview")
+        self.assert_env(actual, self.official_endpoint, "step-5-preview")
         self.assert_backup_and_cleanup(original)
         self.assertEqual(list(target_directory.glob("*.tmp.*")), [])
 
@@ -359,6 +359,8 @@ class ConfigureClaudeChecks:
 
 @unittest.skipUnless(shutil.which("jq"), "Bash script requires jq")
 class ChineseConfigureClaudeTests(ConfigureClaudeChecks, unittest.TestCase):
+    official_endpoint = "https://api.stepfun.com"
+    step_plan_endpoint = "https://api.stepfun.com/step_plan"
     script = REPOSITORY / "zh-CN" / "configure_claude.sh"
     choice_prompt = "请输入数字 [1-2]: "
     key_prompt = "请输入 StepFun API Key: "
@@ -368,6 +370,8 @@ class ChineseConfigureClaudeTests(ConfigureClaudeChecks, unittest.TestCase):
 
 @unittest.skipUnless(shutil.which("jq"), "Bash script requires jq")
 class EnglishConfigureClaudeTests(ConfigureClaudeChecks, unittest.TestCase):
+    official_endpoint = "https://api.stepfun.ai/"
+    step_plan_endpoint = "https://api.stepfun.ai/step_plan"
     script = REPOSITORY / "en" / "configure_claude.sh"
     choice_prompt = "Enter a number [1-2]: "
     key_prompt = "Enter your StepFun API Key: "
