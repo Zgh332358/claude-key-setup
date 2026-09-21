@@ -214,7 +214,8 @@ function Publish-ConfigFile {
     param([string]$TempFile, [string]$ConfigFile, [bool]$ReplaceExisting)
 
     if ($ReplaceExisting) {
-        [System.IO.File]::Replace($TempFile, $ConfigFile, $null)
+        # 向 .NET string 参数传递真正的 null，避免 $null 被转换为空路径。
+        [System.IO.File]::Replace($TempFile, $ConfigFile, [System.Management.Automation.Language.NullString]::Value)
     } else {
         [System.IO.File]::Move($TempFile, $ConfigFile)
     }
