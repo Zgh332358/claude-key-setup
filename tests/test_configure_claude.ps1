@@ -35,6 +35,14 @@ function Assert-Bytes([string]$Path, [byte[]]$Expected) {
     $actual = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($Path))
     Assert-True ($actual -ceq [Convert]::ToBase64String($Expected)) 'File bytes changed unexpectedly.'
 }
+function Assert-NoSidecars([string]$Directory, [string]$Prefix, [string]$Message) {
+    # Win32 wildcard filters treat the trailing dot in "name.*" as optional.
+    # A literal prefix includes the dot, so the original "name" cannot match.
+    $sidecars = @(Get-ChildItem -LiteralPath $Directory -Force | Where-Object {
+        $_.Name.StartsWith($Prefix, [System.StringComparison]::OrdinalIgnoreCase)
+    })
+    Assert-True ($sidecars.Count -eq 0) $Message
+}
 
 $fixture = Join-Path ([System.IO.Path]::GetTempPath()) ('claude-key-setup-test-' + [Guid]::NewGuid().ToString('N'))
 $directorySecurity = New-Object System.Security.AccessControl.DirectorySecurity
@@ -119,7 +127,7 @@ try {
         Write-PrivateFile $path $bytes
         Assert-Throws { Update-ConfigFile $path $baseUrl $fakeKey 'step-5-preview' } 'Invalid config was accepted.'
         Assert-Bytes $path $bytes
-        Assert-True (@(Get-ChildItem -LiteralPath $fixture -Filter ((Split-Path $path -Leaf) + '.*')).Count -eq 0) 'Invalid config created sidecars.'
+        Assert-NoSidecars $fixture ((Split-Path $path -Leaf) + '.') 'Invalid config created sidecars.'
     }
     $passed++
     Write-Host "Completed Windows regression group $passed ($Language)."
@@ -133,7 +141,7 @@ try {
         Assert-Throws { Update-ConfigFile $locked $baseUrl $fakeKey 'step-5-preview' } 'Locked replacement unexpectedly succeeded.'
         Assert-Bytes $locked $lockedBytes
     } finally { $lock.Dispose() }
-    Assert-True (@(Get-ChildItem -LiteralPath $fixture -Filter 'locked.json.tmp.*').Count -eq 0) 'Failed update left a temp file.'
+    Assert-NoSidecars $fixture 'locked.json.tmp.' 'Failed update left a temp file.'
     $passed++
     Write-Host "Completed Windows regression group $passed ($Language)."
 
@@ -157,8 +165,8 @@ try {
     Assert-Bytes $recoveryTarget $recoveryBytes
     Assert-Bytes $failureBackup $recoveryBytes
     Assert-PrivateFileSecurity (Get-Acl -LiteralPath $recoveryTarget)
-    Assert-True (@(Get-ChildItem -LiteralPath $fixture -Filter 'recovery.json.tmp.*').Count -eq 0) 'Recovery left a temp file.'
-    Assert-True (@(Get-ChildItem -LiteralPath $fixture -Filter 'recovery.json.restore.*').Count -eq 0) 'Recovery left a restore file.'
+    Assert-NoSidecars $fixture 'recovery.json.tmp.' 'Recovery left a temp file.'
+    Assert-NoSidecars $fixture 'recovery.json.restore.' 'Recovery left a restore file.'
     $passed++
     Write-Host "Completed Windows regression group $passed ($Language)."
 
@@ -166,7 +174,7 @@ try {
     $directory = Join-Path $fixture 'directory.json'
     [System.IO.Directory]::CreateDirectory($directory) | Out-Null
     Assert-Throws { Update-ConfigFile $directory $baseUrl $fakeKey 'step-5-preview' } 'Directory was accepted as a config.'
-    Assert-True (@(Get-ChildItem -LiteralPath $fixture -Filter 'directory.json.*').Count -eq 0) 'Directory rejection created sidecars.'
+    Assert-NoSidecars $fixture 'directory.json.' 'Directory rejection created sidecars.'
     $passed++
     Write-Host "Completed Windows regression group $passed ($Language)."
 
