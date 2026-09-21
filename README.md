@@ -1,124 +1,64 @@
 # Claude Key Setup
 
-快速配置 Claude Code 的 StepFun API Key 和端点设置。
+Configure Claude Code for StepFun while preserving your existing settings.
+为 Claude Code 配置 StepFun，并保留已有的其他设置。
 
-## 特性
+| Language / 语言 | Folder / 目录 | Documentation / 说明 |
+| --- | --- | --- |
+| 简体中文 | [`zh-CN/`](zh-CN/) | [中文版说明](zh-CN/README.md) |
+| English | [`en/`](en/) | [English instructions](en/README.md) |
 
-- ✅ 支持 2 种 StepFun 接入方式（官方 API、Step Plan）
-- ✅ 自动检测 Claude Code 配置位置
-- ✅ 自动创建基础配置文件（如果不存在）
-- ✅ 前置条件检查（jq、bash/PowerShell、配置）
-- ✅ 交互式菜单，简单易用
-- ✅ 自动备份原配置
-- ✅ 跨平台支持（macOS、Linux、Windows）
+Each folder contains standalone Bash and PowerShell scripts, with prompts, errors, and documentation in the selected language.
+每个目录都包含独立运行的 Bash、PowerShell 脚本，以及完整的对应语言提示和说明。
 
-## 快速开始
-
-### macOS / Linux（Bash）
-```bash
-curl -fsSL https://raw.githubusercontent.com/Zgh332358/claude-key-setup/main/configure_claude.sh -o configure_claude.sh
-chmod +x configure_claude.sh
-bash configure_claude.sh
+```text
+zh-CN/
+  configure_claude.sh
+  configure_claude.ps1
+  README.md
+en/
+  configure_claude.sh
+  configure_claude.ps1
+  README.md
+tests/
+  test_configure_claude.py
+  test_configure_claude.ps1
 ```
 
-### Windows（PowerShell 管理员模式）
+Both versions replace only the top-level `env` object, preserve settings such as `hooks` and `theme`, and default to `step-5-preview`. They support the StepFun API and Step Plan.
+两种语言版本都只替换顶层 `env`，保留 `hooks`、`theme` 等其他字段，默认模型为 `step-5-preview`，支持官方 API 与 Step Plan。
 
-> ⚠️ 必须在**管理员模式**的 PowerShell 下运行，否则脚本会提示并退出。
+API key input is hidden. Credentials are kept out of Bash subprocess arguments, and new configuration, backup, and temporary files use restricted permissions. Windows runs without requiring administrator privileges.
+API Key 输入隐藏；Bash 子进程参数中不包含 Key；新配置、备份和临时文件限制访问权限。Windows 无需管理员权限。
 
-1. 右键点击 Windows 开始菜单，选择「终端管理员」或「Windows PowerShell (管理员)」
-2. 执行以下命令：
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-irm https://raw.githubusercontent.com/Zgh332358/claude-key-setup/main/configure_claude.ps1 -OutFile configure_claude.ps1
-.\configure_claude.ps1
-```
+## Compatibility / 兼容入口
 
-### 指定配置文件路径
-```bash
-# macOS/Linux
-bash configure_claude.sh -c /path/to/settings.json
+The root-level `configure_claude.sh` and `configure_claude.ps1` are exact copies of the Chinese version, retained so existing download links continue to work. For new downloads, use the selected language folder.
+根目录的两个脚本是中文版的完整副本，用于保留旧下载链接。新用户请使用对应语言目录中的版本。
 
-# Windows PowerShell
-.\configure_claude.ps1 -c C:\path\to\settings.json
-```
+## Development and tests / 维护与测试
 
-## 支持模式
-
-| 选项 | 模式 | Base URL | 说明 | API Key 获取 |
-|------|------|----------|------|-------------|
-| 1 | StepFun 官方 API | `https://api.stepfun.com` | 按量计费 | https://platform.stepfun.com/interface-key |
-| 2 | StepFun Step Plan | `https://api.stepfun.com/step_plan` | 订阅制 | https://platform.stepfun.com/interface-key |
-
-## 前置条件
-
-### 必需
-- **bash** (macOS/Linux) 或 **PowerShell** (Windows)
-
-- **Claude Code** - 已安装 CLI 工具
-
-### 可选
-- **配置文件** - 如果不存在，脚本会自动创建
-
-## 配置文件位置
-
-| 系统 | 配置文件路径 |
-|------|-------------|
-| macOS/Linux | `~/.claude/settings.json` |
-| Windows | `%USERPROFILE%\.claude\settings.json` |
-
-如果配置文件不存在，脚本会自动创建。
-
-## 配置流程
-
-1. ✅ 检查前置条件（bash/PowerShell、环境）
-2. ✅ 查找/创建配置文件
-3. ✅ 显示菜单（StepFun 两个选项）
-4. ✅ 输入 API Key
-5. ✅ 输入模型名称（默认 `step-3.5-flash`，可回车跳过）
-6. ✅ 备份原配置
-7. ✅ 写入新配置
-8. ✅ 提示重启 Claude Code
-
-## 使用示例
+Run tests from the repository root. All fixtures use temporary files and fake keys.
+在仓库根目录执行；测试只使用临时文件和假 Key。
 
 ```bash
-# macOS/Linux
-bash configure_claude.sh
-
-# 选择 1 (StepFun 官方 API)
-# 输入 API Key: sk-xxx
-# 模型名称: step-3.5-flash (或回车使用默认)
+python3 -B -m unittest discover -s tests -v
 ```
 
 ```powershell
-# Windows PowerShell
-.\configure_claude.ps1
-
-# 选择 1 (StepFun 官方 API)
-# 输入 API Key: sk-xxx
-# 模型名称: step-3.5-flash (或回车使用默认)
+# Windows PowerShell 5.1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\test_configure_claude.ps1 -Language zh-CN
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\test_configure_claude.ps1 -Language en
+# PowerShell 7 on Windows
+pwsh -NoProfile -File .\tests\test_configure_claude.ps1 -Language zh-CN
+pwsh -NoProfile -File .\tests\test_configure_claude.ps1 -Language en
 ```
 
-## 脚本说明
+GitHub Actions runs both Bash variants on Linux and macOS, and both language variants on Windows PowerShell 5.1 and PowerShell 7. The suite also checks that legacy root scripts match `zh-CN/` and English files contain no untranslated Chinese text.
+GitHub Actions 在 Linux、macOS 上验证两个 Bash 版本，并在 Windows PowerShell 5.1、PowerShell 7 上分别验证两种语言版本。测试也检查根目录兼容副本与 `zh-CN/` 一致，以及英文文件没有遗漏的中文内容。
 
-仓库包含两个脚本：
-- `configure_claude.sh` - Bash 版本（macOS、Linux、WSL）
-- `configure_claude.ps1` - PowerShell 版本（Windows）
-
-两个脚本功能完全相同，只是针对不同平台做了适配。
-
-## 配置结构
-
-脚本会全量覆盖 `settings.json`，写入以下字段：
-- `env.ANTHROPIC_AUTH_TOKEN` - API Key
-- `env.ANTHROPIC_BASE_URL` - API 端点
-- `env.ANTHROPIC_MODEL` - 默认模型
-- `env.ANTHROPIC_SMALL_FAST_MODEL` - 快速模型
-- `env.ANTHROPIC_DEFAULT_SONNET_MODEL` - Sonnet 模型
-- `env.ANTHROPIC_DEFAULT_OPUS_MODEL` - Opus 模型
-- `env.ANTHROPIC_DEFAULT_HAIKU_MODEL` - Haiku 模型
-
-> ⚠️ 脚本会备份原配置后全量覆盖，确保不会残留旧的模型配置。
+When changing behavior, update both language folders and copy the Chinese scripts to the root compatibility paths before running the full suite.
+修改行为时同步更新两种语言版本，再将中文版脚本复制到根目录兼容路径，最后运行完整测试。
 
 ## License
 
