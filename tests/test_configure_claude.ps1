@@ -70,6 +70,7 @@ try {
     Assert-True ($result.env.ANTHROPIC_MODEL -ceq 'step-5-preview') 'Model was not preserved.'
     Assert-PrivateFileSecurity (Get-Acl -LiteralPath $created)
     $passed++
+    Write-Host "Completed Windows regression group $passed ($Language)."
 
     # Backups retain exact original bytes, and only env is replaced.
     $existing = Join-Path $fixture 'existing.json'
@@ -93,12 +94,14 @@ try {
     Assert-PrivateFileSecurity (Get-Acl -LiteralPath $existing)
     Assert-True ((Get-Acl -LiteralPath $fixture).Sddl -ceq $parentAclBefore) 'Parent directory ACL changed.'
     $passed++
+    Write-Host "Completed Windows regression group $passed ($Language)."
 
     # Repeated runs cannot overwrite an earlier backup.
     $backupAgain = Update-ConfigFile $existing $baseUrl 'another-test-only-key' 'step-5-preview'
     Assert-True ($backup -cne $backupAgain) 'Backup names collided.'
     Assert-Bytes $backup $original
     $passed++
+    Write-Host "Completed Windows regression group $passed ($Language)."
 
     # Exclusive creation cannot truncate or delete an existing file.
     $collision = Join-Path $fixture 'collision.json'
@@ -107,6 +110,7 @@ try {
     Assert-Throws { Write-PrivateFile $collision $encoding.GetBytes('replacement') } 'CreateNew unexpectedly overwrote a file.'
     Assert-Bytes $collision $collisionBytes
     $passed++
+    Write-Host "Completed Windows regression group $passed ($Language)."
 
     # Invalid JSON and invalid root types leave the original and sidecars untouched.
     foreach ($invalid in @('{"env":', '[{"env":{}}]', 'null', '')) {
@@ -118,6 +122,7 @@ try {
         Assert-True (@(Get-ChildItem -LiteralPath $fixture -Filter ((Split-Path $path -Leaf) + '.*')).Count -eq 0) 'Invalid config created sidecars.'
     }
     $passed++
+    Write-Host "Completed Windows regression group $passed ($Language)."
 
     # A locked original forces replacement failure without truncation or leftover temp files.
     $locked = Join-Path $fixture 'locked.json'
@@ -130,6 +135,7 @@ try {
     } finally { $lock.Dispose() }
     Assert-True (@(Get-ChildItem -LiteralPath $fixture -Filter 'locked.json.tmp.*').Count -eq 0) 'Failed update left a temp file.'
     $passed++
+    Write-Host "Completed Windows regression group $passed ($Language)."
 
     # Simulate the documented ReplaceFile failure that can leave its target absent.
     $recoveryTarget = Join-Path $fixture 'recovery.json'
@@ -154,6 +160,7 @@ try {
     Assert-True (@(Get-ChildItem -LiteralPath $fixture -Filter 'recovery.json.tmp.*').Count -eq 0) 'Recovery left a temp file.'
     Assert-True (@(Get-ChildItem -LiteralPath $fixture -Filter 'recovery.json.restore.*').Count -eq 0) 'Recovery left a restore file.'
     $passed++
+    Write-Host "Completed Windows regression group $passed ($Language)."
 
     # Directories are rejected before any backup/temp file is written.
     $directory = Join-Path $fixture 'directory.json'
@@ -161,6 +168,7 @@ try {
     Assert-Throws { Update-ConfigFile $directory $baseUrl $fakeKey 'step-5-preview' } 'Directory was accepted as a config.'
     Assert-True (@(Get-ChildItem -LiteralPath $fixture -Filter 'directory.json.*').Count -eq 0) 'Directory rejection created sidecars.'
     $passed++
+    Write-Host "Completed Windows regression group $passed ($Language)."
 
     # ACL verification failure must happen before payload writes and remove only its own file.
     $savedAssert = ${function:Assert-PrivateFileSecurity}
@@ -171,8 +179,23 @@ try {
     } finally { Set-Item -Path Function:Assert-PrivateFileSecurity -Value $savedAssert }
     Assert-True (-not (Test-Path -LiteralPath $aclFailure)) 'ACL failure left an output file.'
     $passed++
+    Write-Host "Completed Windows regression group $passed ($Language)."
 
     Write-Host "PASS: $passed Windows regression groups ($Language; PowerShell $($PSVersionTable.PSVersion))."
+} catch {
+    # Test-only diagnostics: all configs and credentials above are fake private fixtures.
+    # Snapshot errors before printing; do not dump variables or the process environment.
+    $recentErrors = @($Error | Select-Object -First 4)
+    Write-Host "FAIL after $passed completed Windows regression groups ($Language)."
+    foreach ($record in $recentErrors) {
+        $diagnosticMessage = [string]$record.Exception.Message
+        foreach ($fakeCredential in @($fakeKey, 'another-test-only-key', 'old-test-key', 'fake-secret')) {
+            $diagnosticMessage = $diagnosticMessage.Replace($fakeCredential, '[fake-key-redacted]')
+        }
+        Write-Host ("DIAGNOSTIC: {0}: {1}" -f $record.Exception.GetType().FullName, $diagnosticMessage)
+        Write-Host $record.ScriptStackTrace
+    }
+    throw
 } finally {
     if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Recurse -Force }
 }
